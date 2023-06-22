@@ -35,7 +35,7 @@ KING_VALUE = 20
 EDGE_VALUE = 5
 CENTER_VALUE = 3
 
-def draw_board():
+def start_board():
     # Clear the canvas
     canvas.delete("all")
     # Draw the squares of the checkerboard
@@ -60,7 +60,7 @@ def draw_board():
     canvas.update()
 
 
-def is_valid_move(game_board, start_row, start_col, end_row, end_col):
+def check_move(game_board, start_row, start_col, end_row, end_col):
     piece_color = game_board[start_row][start_col]
 
     # Define a list to store all possible colors of the opponent's pieces
@@ -130,10 +130,10 @@ def get_valid_moves(board, row, col):
     def check_and_add_moves(directions):
         for dx, dy in directions:
             new_row, new_col = row + dx, col + dy
-            if is_valid_move(board, row, col, new_row, new_col):
+            if check_move(board, row, col, new_row, new_col):
                 moves.append((new_row, new_col))
             new_row, new_col = row + 2 * dx, col + 2 * dy
-            if is_valid_move(board, row, col, new_row, new_col):
+            if check_move(board, row, col, new_row, new_col):
                 moves.append((new_row, new_col))
     if piece in ["green", "yellow"]:
         check_and_add_moves([(-1, -1), (-1, 1), (1, -1), (1, 1)])
@@ -143,7 +143,7 @@ def get_valid_moves(board, row, col):
         check_and_add_moves([(1, -1), (1, 1)])
     return moves
 
-def can_jump(row, col):
+def jump_check(row, col):
     # Check if a piece has a chance to jump
     piece = board[row][col]
 
@@ -155,7 +155,7 @@ def can_jump(row, col):
         move_row, move_col = row + dx, col + dy
         jump_row, jump_col = row + 2 * dx, col + 2 * dy
 
-        if is_on_board(jump_row, jump_col) and board[jump_row][jump_col] is None:
+        if cross_board_check(jump_row, jump_col) and board[jump_row][jump_col] is None:
             # If the cell after the jump is empty
             if (piece == PLAYER_COLOR or piece == "white king") and move_row < row and board[move_row][move_col] in [AI_COLOR, "black king"]:
                 return True
@@ -164,11 +164,11 @@ def can_jump(row, col):
 
     return False
 
-def is_on_board(x, y):
+def cross_board_check(x, y):
     # Check if a coordinate is on the board
     return 0 <= x < 8 and 0 <= y < 8
 
-def make_king(x, y):
+def become_king(x, y):
     # Check if a piece can be promoted to king, and update its status
     piece = board[x][y]
 
@@ -186,7 +186,7 @@ def make_king(x, y):
     return False
 
 # Move a piece, with parameters for the starting position and the target position
-def make_move(board, start_row, start_col, end_row, end_col, is_crowning=False):
+def piece_move(board, start_row, start_col, end_row, end_col, is_crowning=False):
     # Get the color of the piece
     piece_color = board[start_row][start_col]
 
@@ -239,7 +239,7 @@ def deep_copy(obj):
     return [deep_copy(item) for item in obj] if isinstance(obj, list) else obj
 
 def alpha_beta_search(board, depth, alpha, beta, is_ai_turn):
-    if is_game_over() or depth == 0:
+    if check_game_over() or depth == 0:
         return evaluate(board, AI_COLOR), None
     moves = get_all_moves(board, AI_COLOR if is_ai_turn else PLAYER_COLOR)
     if not moves:
@@ -248,7 +248,7 @@ def alpha_beta_search(board, depth, alpha, beta, is_ai_turn):
     best_move = None
     for move in moves:
         new_board = deep_copy(board)
-        make_move(new_board, *move)
+        piece_move(new_board, *move)
         score, _ = alpha_beta_search(new_board, depth - 1, alpha, beta, not is_ai_turn)
         if is_ai_turn and score > best_score:
             best_score = score
@@ -262,7 +262,7 @@ def alpha_beta_search(board, depth, alpha, beta, is_ai_turn):
             break
     return best_score, best_move if best_move else moves[0]
 
-def ai_move():
+def ai_piece_move():
     time.sleep(0.5)
     best_move = None
     row, col, is_king = None, None, None
@@ -275,45 +275,45 @@ def ai_move():
             must_jump = any(abs(move[0] - move[2]) > 1 for move in moves)
             moves = [move for move in moves if abs(move[0] - move[2]) > 1] if must_jump else moves
             random_move = random.choice(moves)
-            make_move(board, *random_move)
-            draw_board()
+            piece_move(board, *random_move)
+            start_board()
             row, col = random_move[2], random_move[3]
-            is_king = make_king(row, col)
+            is_king = become_king(row, col)
 
     else:
         depth = 2 if ai_difficulty == "Medium" else 4
         _, best_move = alpha_beta_search(board, depth, -float('inf'), float('inf'), True)
         if best_move:
-            make_move(board, *best_move)
-            draw_board()
+            piece_move(board, *best_move)
+            start_board()
             row, col = best_move[2], best_move[3]
-            is_king = make_king(row, col)
+            is_king = become_king(row, col)
 
-    while best_move and not is_king and can_jump(row, col):
+    while best_move and not is_king and jump_check(row, col):
         _, best_move = alpha_beta_search(board, 4, -float('inf'), float('inf'), True)
         if best_move:
-            make_move(board, *best_move)
-            draw_board()
+            piece_move(board, *best_move)
+            start_board()
             row, col = best_move[2], best_move[3]
-            is_king = make_king(row, col)
+            is_king = become_king(row, col)
 
-    if is_game_over():
-        show_game_over_message()
+    if check_game_over():
+        ending_message()
         return True
 
     return False
 
-def set_difficulty(difficulty):
+def game_setting(difficulty):
     # setting the difficulty
     global ai_difficulty
     ai_difficulty = difficulty
 
-def handle_click(event):
+def click_gui(event):
     global selected_piece, valid_moves, game_over
     x, y = event.x, event.y
     row, col = y // 60, x // 60
 
-    if game_over or not is_on_board(row, col):
+    if game_over or not cross_board_check(row, col):
         return
 
     if selected_piece is None:
@@ -324,14 +324,14 @@ def handle_click(event):
                 valid_moves = [move for move in valid_moves if abs(move[0] - row) > 1]
     else:
         if (row, col) in valid_moves:
-            is_king = make_move(board, selected_piece[0], selected_piece[1], row, col)
-            draw_board()
-            if not is_king and abs(row - selected_piece[0]) > 1 and can_jump(row, col):
+            is_king = piece_move(board, selected_piece[0], selected_piece[1], row, col)
+            start_board()
+            if not is_king and abs(row - selected_piece[0]) > 1 and jump_check(row, col):
                 selected_piece = (row, col)
                 valid_moves = [move for move in valid_moves if abs(move[0] - row) > 1]
             else:
                 selected_piece = None
-                ai_move()
+                ai_piece_move()
         elif board[row][col] in (PLAYER_COLOR, PLAYER_KING_COLOR):
             selected_piece = (row, col)
             valid_moves = get_valid_moves(board, row, col)
@@ -340,9 +340,9 @@ def handle_click(event):
         else:
             selected_piece = None
 
-    draw_board()
+    start_board()
 
-def is_game_over():
+def check_game_over():
     player_pieces, ai_pieces = 0, 0
     player_has_valid_moves, ai_has_valid_moves = False, False
 
@@ -366,7 +366,7 @@ def is_game_over():
 
     return False
 
-def display_rules():
+def showing_rules():
     # Display rule descriptions
     messagebox.showinfo("Game Rules",
                         "This is a game of International 64-square Draughts.\n"
@@ -386,9 +386,9 @@ def restart_game():
 
     game_over = False
 
-    draw_board()
+    start_board()
 
-def show_game_over_message():
+def ending_message():
     player_pieces = 0
     ai_pieces = 0
     player_has_valid_moves = False
@@ -411,11 +411,11 @@ def show_game_over_message():
     else:
         message = 'You won!'
 
-    show_message_in_new_window(message)
+    message_window(message)
 
     game_over = True
 
-def show_message_in_new_window(message):
+def message_window(message):
     top = tk.Toplevel()
     top.title('Game Over')
 
@@ -425,10 +425,10 @@ def show_message_in_new_window(message):
     close_button = tk.Button(top, text='Close Window', command=top.destroy)
     close_button.pack(pady=10)
 
-    restart_button = tk.Button(top, text='Restart Game', command=lambda: restart_game_and_destroy(top))
+    restart_button = tk.Button(top, text='Restart Game', command=lambda: refreash(top))
     restart_button.pack(pady=10)
 
-def restart_game_and_destroy(top):
+def refreash(top):
     top.destroy()
     restart_game()
 
@@ -451,13 +451,13 @@ def create_menu(window):
     # Add menu items
     rules_menu = tk.Menu(menu)
     menu.add_cascade(label="Game Rules", menu=rules_menu)
-    rules_menu.add_command(label="View Rules", command=display_rules)
+    rules_menu.add_command(label="View Rules", command=showing_rules)
 
     difficulty_menu = tk.Menu(menu)
     menu.add_cascade(label="Difficulty Level", menu=difficulty_menu)
-    difficulty_menu.add_command(label="Easy", command=lambda: set_difficulty("Easy"))
-    difficulty_menu.add_command(label="Medium", command=lambda: set_difficulty("Medium"))
-    difficulty_menu.add_command(label="Hard", command=lambda: set_difficulty("Hard"))
+    difficulty_menu.add_command(label="Easy", command=lambda: game_setting("Easy"))
+    difficulty_menu.add_command(label="Medium", command=lambda: game_setting("Medium"))
+    difficulty_menu.add_command(label="Hard", command=lambda: game_setting("Hard"))
     menu.add_command(label="Restart Game", command=restart_game)
 
 
@@ -470,10 +470,10 @@ if __name__ == "__main__":
 
     # Initialize board and bind event
     initialize_board()
-    canvas.bind("<Button-1>", handle_click)
+    canvas.bind("<Button-1>", click_gui)
 
     # Create menu and draw board
     create_menu(window)
-    draw_board()
+    start_board()
 
     window.mainloop()
