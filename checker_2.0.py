@@ -231,130 +231,37 @@ def evaluate(board: List[List[str]], color: str) -> int:
 def deep_copy(obj):
     return [deep_copy(item) for item in obj] if isinstance(obj, list) else obj
 
-# Alpha-Beta剪枝算法，搜索最优走法，并返回最优评分和走法
-# 使用Alpha-Beta剪枝算法搜索最佳走法，参数是棋盘，搜索深度，alpha值，beta值，和是否是最大化玩家
 def alpha_beta_search(board, depth, alpha, beta, is_ai_turn):
-    # 如果游戏结束或者搜索深度为0，就返回评估值和空走法
     if is_game_over() or depth == 0:
         return evaluate(board, AI_COLOR), None
-    # 如果是AI的回合，就尝试最大化评估值
-    # 如果AI没有有效的走法，就返回一个很小的评估值，表示AI输了
-    if is_ai_turn and not get_all_moves(board, AI_COLOR):
-        return -float('inf'), None
 
-    # 如果玩家没有有效的走法，就返回一个很大的评估值，表示AI赢了
-    if not is_ai_turn and not get_all_moves(board, PLAYER_COLOR):
-        return float('inf'), None
+    moves = get_all_moves(board, AI_COLOR if is_ai_turn else PLAYER_COLOR)
+    if not moves:
+        return (-float('inf'), None) if is_ai_turn else (float('inf'), None)
 
-    # 如果是AI的回合，就尝试最大化评估值
-    if is_ai_turn:
-        # 初始化最大评估值为负无穷
-        max_value = -float('inf')
-        # 初始化最佳走法为None
-        best_move = None
+    best_score = -float('inf') if is_ai_turn else float('inf')
+    best_move = None
 
-        # 遍历棋盘上的每个格子
-        for row in range(8):
-            for col in range(8):
-                if board[row][col] in (AI_COLOR, AI_KING_COLOR):
-                    # 获取棋子的有效移动
-                    moves = get_valid_moves(board, row, col)
+    for move in moves:
+        new_board = deep_copy(board)
+        make_move(new_board, *move)
 
-                    # 检查AI是否有必须跳过对方棋子的情况
-                    must_jump = False
-                    for r in range(8):
-                        for c in range(8):
-                            if board[r][c] in (AI_COLOR, AI_KING_COLOR):
-                                moves2 = get_valid_moves(board, r, c)
-                                for move2 in moves2:
-                                    if abs(move2[0] - r) > 1:
-                                        must_jump = True
-                                        break
+        score, _ = alpha_beta_search(new_board, depth - 1, alpha, beta, not is_ai_turn)
 
-                    # 如果有，就只考虑可以跳过对方棋子的走法
-                    if must_jump:
-                        moves = [move for move in moves if abs(move[0] - row) > 1]
+        if is_ai_turn and score > best_score:
+            best_score = score
+            best_move = move
+            alpha = max(alpha, best_score)
 
-                    # 遍历每个有效移动
-                    for move in moves:
-                        # 复制一个新的棋盘，并模拟走法
-                        new_board = deep_copy(board)
-                        make_move(new_board, row, col, move[0], move[1])
+        if not is_ai_turn and score < best_score:
+            best_score = score
+            best_move = move
+            beta = min(beta, best_score)
 
-                        # 递归调用alpha_beta_search函数，获取下一层的评估值和走法
-                        value, _ = alpha_beta_search(new_board, depth - 1, alpha, beta, False)
+        if beta <= alpha:
+            break
 
-                        # 如果评估值大于最大评估值，就更新最大评估值和最佳走法
-                        if value > max_value:
-                            max_value = value
-                            best_move = (row, col, move[0], move[1])
-
-                        # 如果评估值大于等于beta值，就剪枝并返回最大评估值和最佳走法
-                        if value >= beta:
-                            return max_value, best_move
-
-                        # 如果评估值大于alpha值，就更新alpha值
-                        if value > alpha:
-                            alpha = value
-
-        # 返回最大评估值和最佳走法
-        return max_value, best_move
-
-    # 如果是玩家的回合，就尝试最小化评估值
-    else:
-        # 初始化最小评估值为正无穷
-        min_value = float('inf')
-        # 初始化最佳走法为None
-        best_move = None
-
-        # 遍历棋盘上的每个格子
-        for row in range(8):
-            for col in range(8):
-                # 如果格子有玩家的棋子
-                if board[row][col] in (PLAYER_COLOR, PLAYER_KING_COLOR):
-                    # 获取棋子的有效移动
-                    moves = get_valid_moves(board, row, col)
-
-                    # 检查玩家是否有必须跳过对方棋子的情况
-                    must_jump = False
-                    for r in range(8):
-                        for c in range(8):
-                            if board[r][c] in (PLAYER_COLOR, PLAYER_KING_COLOR):
-                                moves2 = get_valid_moves(board, r, c)
-                                for move2 in moves2:
-                                    if abs(move2[0] - r) > 1:
-                                        must_jump = True
-                                        break
-
-                    # 如果有，就只考虑可以跳过对方棋子的走法
-                    if must_jump:
-                        moves = [move for move in moves if abs(move[0] - row) > 1]
-
-                    # 遍历每个有效移动
-                    for move in moves:
-                        # 复制一个新的棋盘，并模拟走法
-                        new_board = deep_copy(board)
-                        make_move(new_board, row, col, move[0], move[1])
-
-                        # 递归调用alpha_beta_search函数，获取下一层的评估值和走法
-                        value, _ = alpha_beta_search(new_board, depth - 1, alpha, beta, True)
-
-                        # 如果评估值小于最小评估值，就更新最小评估值和最佳走法
-                        if value < min_value:
-                            min_value = value
-                            best_move = (row, col, move[0], move[1])
-
-                        # 如果评估值小于等于alpha值，就剪枝并返回最小评估值和最佳走法
-                        if value <= alpha:
-                            return min_value, best_move
-
-                        # 如果评估值小于beta值，就更新beta值
-                        if value < beta:
-                            beta = value
-
-        # 返回最小评估值和最佳走法
-        return min_value, best_move
-
+    return best_score, best_move
 
 # AI移动，根据ai_difficulty的值来调用不同的搜索算法
 def ai_move():
