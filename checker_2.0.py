@@ -16,7 +16,7 @@ game_over = False
 PLAYER_COLOR = "white"
 AI_COLOR = "black"
 PLAYER_KING_COLOR = "green"
-AI_KING_COLOR = "yellow"
+AI_KING_COLOR = "blue"
 
 NORMAL_VALUE = 10  # 普通棋子的价值
 KING_VALUE = 20  # 升王棋子的价值
@@ -51,7 +51,7 @@ def draw_board():
                     canvas.create_oval(
                         x1 + 10, y1 + 10,   # Top-left coordinate of the oval
                         x2 - 10, y2 - 10,   # Bottom-right coordinate of the oval
-                        fill="yellow"
+                        fill="blue"
                     )
 
                     canvas.create_oval(
@@ -78,7 +78,7 @@ def draw_board():
 
             # If the square is a selected piece or a valid move, mark it with a yellow border
             if selected_piece is not None and (row, col) in get_valid_moves(board, selected_piece[0], selected_piece[1]):
-                canvas.create_rectangle(x1 + 2, y1 + 2, x2 - 2, y2 - 2, outline="yellow", width=4)
+                canvas.create_rectangle(x1 + 2, y1 + 2, x2 - 2, y2 - 2, outline="black", width=4)
 
     # Update the canvas
     canvas.update()
@@ -100,7 +100,7 @@ def is_valid_move(game_board, start_row, start_col, end_row, end_col):
     # If the absolute difference between the target position and the starting position is 1, it means it is a normal move
     if abs(end_row - start_row) == 1:
         # If the piece is a king, it can move one square in any direction
-        if piece_color in ["green", "yellow"]:
+        if piece_color in ["green", "blue"]:
             # If the target position is the opponent's piece, return False
             if game_board[end_row][end_col] in enemy_piece_colors:
                 return False
@@ -177,41 +177,33 @@ def get_valid_moves(board, row, col):
     return moves
 
 
-
 def can_jump(row, col):
-    # 判断一个棋子是否有跳过的机会
+    # Check if a piece has a chance to jump
     piece = board[row][col]
 
     if piece is None:
         return False
 
-    for direction in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
-        move_row = row + direction[0]
-        move_col = col + direction[1]
-        jump_row = row + 2 * direction[0]
-        jump_col = col + 2 * direction[1]
+    directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+    for dx, dy in directions:
+        move_row, move_col = row + dx, col + dy
+        jump_row, jump_col = row + 2 * dx, col + 2 * dy
 
         if is_on_board(jump_row, jump_col) and board[jump_row][jump_col] is None:
-            # 如果跳过后的格子是空的
-            if piece == PLAYER_COLOR or piece == "white king":
-                # 如果是玩家的棋子，只能向前跳过
-                if move_row < row and board[move_row][move_col] in [AI_COLOR, "black king"]:
-                    return True
-
-            elif piece == AI_COLOR or piece == "black king":
-                # 如果是电脑的棋子，只能向后跳过
-                if move_row > row and board[move_row][move_col] in [PLAYER_COLOR, "white king"]:
-                    return True
+            # If the cell after the jump is empty
+            if (piece == PLAYER_COLOR or piece == "white king") and move_row < row and board[move_row][move_col] in [AI_COLOR, "black king"]:
+                return True
+            elif (piece == AI_COLOR or piece == "black king") and move_row > row and board[move_row][move_col] in [PLAYER_COLOR, "white king"]:
+                return True
 
     return False
 
 def is_on_board(row, col):
-    # 判断一个坐标是否在棋盘上
+    # Check if a coordinate is on the board
     return 0 <= row < 8 and 0 <= col < 8
 
-
 def make_king(row, col):
-    # 判断一个棋子是否可以升王，并更新它的状态
+    # Check if a piece can be promoted to king, and update its status
     piece = board[row][col]
 
     if piece is None:
@@ -221,13 +213,11 @@ def make_king(row, col):
         board[row][col] = "white king"
         return True
 
-    elif piece == AI_COLOR and row == 8 - 1:
+    elif piece == AI_COLOR and row == 7:
         board[row][col] = "black king"
         return True
 
-    else:
-        return False
-
+    return False
 
 # 移动棋子，参数是起始位置和目标位置
 def make_move(board, row1, col1, row2, col2, is_crowning=False):
