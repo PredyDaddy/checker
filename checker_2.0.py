@@ -218,11 +218,18 @@ def make_move(board, start_row, start_col, end_row, end_col, is_crowning=False):
     return board
 
 def get_all_moves(board: List[List[str]], color: str) -> List[Tuple[int, int, int, int]]:
-    return [(row, col, *move) 
-            for row in range(8) 
-            for col in range(8) 
-            if board[row][col] in {color, color.upper()} 
-            for move in get_valid_moves(board, row, col)]
+    all_moves = [(row, col, *move) 
+                 for row in range(8) 
+                 for col in range(8) 
+                 if board[row][col] in {color, color.upper()} 
+                 for move in get_valid_moves(board, row, col)]
+    # Check if there are any jumps
+    jumps = [move for move in all_moves if abs(move[0] - move[2]) > 1]
+    if jumps:
+        return jumps
+    else:
+        return all_moves
+
 
 def evaluate(board: List[List[str]], color: str) -> int:
     color_map = {PLAYER_KING_COLOR: 7, AI_KING_COLOR: -7, PLAYER_COLOR: 1, AI_COLOR: -1}
