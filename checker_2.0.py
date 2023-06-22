@@ -2,6 +2,7 @@ import tkinter as tk
 import random
 import tkinter.messagebox as messagebox
 import time
+from typing import List, Tuple
 
 BOARD_SIZE = 8
 SQUARE_SIZE = 60
@@ -216,68 +217,19 @@ def make_move(board, start_row, start_col, end_row, end_col, is_crowning=False):
 
     return board
 
+def get_all_moves(board: List[List[str]], color: str) -> List[Tuple[int, int, int, int]]:
+    return [(row, col, *move) 
+            for row in range(8) 
+            for col in range(8) 
+            if board[row][col] in {color, color.upper()} 
+            for move in get_valid_moves(board, row, col)]
 
-# 返回所有可能的走法，参数是棋盘和颜色
-def get_all_moves(board, color):
-    # 初始化一个空列表，用来存储走法
-    moves = []
+def evaluate(board: List[List[str]], color: str) -> int:
+    color_map = {PLAYER_KING_COLOR: 7, AI_KING_COLOR: -7, PLAYER_COLOR: 1, AI_COLOR: -1}
+    return sum(color_map.get(board[row][col], 0) for row in range(8) for col in range(8) if board[row][col])
 
-    # 遍历棋盘，找到指定颜色的棋子
-    for row in range(8):
-        for col in range(8):
-            if board[row][col] == color or board[row][col] == color.upper():
-                # 调用get_valid_moves函数，获取该棋子的所有合法走法
-                valid_moves = get_valid_moves(board, row, col)
-
-                # 把走法添加到列表中，每个走法包含起始位置和目标位置
-                moves.extend([(row, col, move[0], move[1]) for move in valid_moves])
-
-    # 返回所有走法的列表
-    return moves
-
-
-def evaluate(board, color):
-    # 初始化一个变量，用来存储评估值
-    value = 0
-
-    # 遍历棋盘上的每个格子
-    for row in range(8):
-        for col in range(8):
-            # 如果格子有棋子
-            if board[row][col] is not None:
-                # 获取棋子的颜色
-                piece_color = board[row][col]
-
-                # 如果棋子是玩家的国王，就给评估值加上7
-                if piece_color == PLAYER_KING_COLOR:
-                    value += 7
-                # 如果棋子是AI的国王，就给评估值减去7
-                elif piece_color == AI_KING_COLOR:
-                    value -= 7
-                # 如果棋子是玩家的普通棋子，就给评估值加上1
-                elif piece_color == PLAYER_COLOR:
-                    value += 1
-                # 如果棋子是AI的普通棋子，就给评估值减去1
-                elif piece_color == AI_COLOR:
-                    value -= 1
-
-    # 返回评估值
-    return value
-
-# 复制一个棋盘，返回一个新的棋盘
 def deep_copy(obj):
-    # 如果对象是一个列表
-    if isinstance(obj, list):
-        # 初始化一个空列表，用来存储新的列表
-        new_list = []
-        # 遍历原来的列表，递归地复制每个元素，并添加到新的列表中
-        for item in obj:
-            new_list.append(deep_copy(item))
-        # 返回新的列表
-        return new_list
-    # 如果对象是其他类型，就直接返回对象本身
-    else:
-        return obj
+    return [deep_copy(item) for item in obj] if isinstance(obj, list) else obj
 
 # Alpha-Beta剪枝算法，搜索最优走法，并返回最优评分和走法
 # 使用Alpha-Beta剪枝算法搜索最佳走法，参数是棋盘，搜索深度，alpha值，beta值，和是否是最大化玩家
