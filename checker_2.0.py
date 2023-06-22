@@ -127,8 +127,6 @@ def is_valid_move(game_board, start_row, start_col, end_row, end_col):
 def get_valid_moves(board, row, col):
     piece = board[row][col]
     moves = []
-
-    # Function to check and add valid moves
     def check_and_add_moves(directions):
         for dx, dy in directions:
             new_row, new_col = row + dx, col + dy
@@ -137,27 +135,12 @@ def get_valid_moves(board, row, col):
             new_row, new_col = row + 2 * dx, col + 2 * dy
             if is_valid_move(board, row, col, new_row, new_col):
                 moves.append((new_row, new_col))
-
-    # King pieces can move or jump in any direction
     if piece in ["green", "yellow"]:
         check_and_add_moves([(-1, -1), (-1, 1), (1, -1), (1, 1)])
-
-    # Regular player pieces can only move or jump upwards
     elif piece == "white":
         check_and_add_moves([(-1, -1), (-1, 1)])
-
-    # Regular AI pieces can only move or jump downwards
     elif piece == "black":
         check_and_add_moves([(1, -1), (1, 1)])
-        
-    # Check if any of the moves is a jump
-    jump_moves = [move for move in moves if abs(move[0] - row) == 2]
-
-    # If there are any jump moves, return only those
-    if jump_moves:
-        return jump_moves
-
-    # Otherwise, return all moves
     return moves
 
 def can_jump(row, col):
@@ -258,37 +241,29 @@ def deep_copy(obj):
 def alpha_beta_search(board, depth, alpha, beta, is_ai_turn):
     if is_game_over() or depth == 0:
         return evaluate(board, AI_COLOR), None
-
     moves = get_all_moves(board, AI_COLOR if is_ai_turn else PLAYER_COLOR)
     if not moves:
         return (-float('inf'), None) if is_ai_turn else (float('inf'), None)
-
     best_score = -float('inf') if is_ai_turn else float('inf')
     best_move = None
-
     for move in moves:
         new_board = deep_copy(board)
         make_move(new_board, *move)
-
         score, _ = alpha_beta_search(new_board, depth - 1, alpha, beta, not is_ai_turn)
-
         if is_ai_turn and score > best_score:
             best_score = score
             best_move = move
             alpha = max(alpha, best_score)
-
         if not is_ai_turn and score < best_score:
             best_score = score
             best_move = move
             beta = min(beta, best_score)
-
         if beta <= alpha:
             break
-
-    return best_score, best_move
+    return best_score, best_move if best_move else moves[0]
 
 def ai_move():
-    time.sleep(0.2)
+    time.sleep(0.5)
     best_move = None
     row, col, is_king = None, None, None
 
@@ -332,8 +307,6 @@ def set_difficulty(difficulty):
     # setting the difficulty
     global ai_difficulty
     ai_difficulty = difficulty
-
-
 
 def handle_click(event):
     global selected_piece, valid_moves, game_over
@@ -406,7 +379,6 @@ def display_rules():
                         "6. The king can move or jump over other pieces in any direction.\n"
                         "Enjoy your game!")
 
-
 def restart_game():
     global board, game_over
     board = [[None] * 8 for _ in range(8)]
@@ -415,7 +387,6 @@ def restart_game():
     game_over = False
 
     draw_board()
-
 
 def show_game_over_message():
     player_pieces = 0
@@ -444,8 +415,6 @@ def show_game_over_message():
 
     game_over = True
 
-
-
 def show_message_in_new_window(message):
     top = tk.Toplevel()
     top.title('Game Over')
@@ -459,11 +428,9 @@ def show_message_in_new_window(message):
     restart_button = tk.Button(top, text='Restart Game', command=lambda: restart_game_and_destroy(top))
     restart_button.pack(pady=10)
 
-
 def restart_game_and_destroy(top):
     top.destroy()
     restart_game()
-
 
 def initialize_board():
     # Initialize the board state
@@ -475,7 +442,6 @@ def initialize_board():
         for col in range(8):
             if (row + col) % 2 == 1:
                 board[row][col] = PLAYER_COLOR
-
 
 def create_menu(window):
     # Create menu
