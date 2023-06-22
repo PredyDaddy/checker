@@ -16,7 +16,7 @@ game_over = False
 PLAYER_COLOR = "white"
 AI_COLOR = "black"
 PLAYER_KING_COLOR = "green"
-AI_KING_COLOR = "blue"
+AI_KING_COLOR = "yellow"
 
 NORMAL_VALUE = 10  # 普通棋子的价值
 KING_VALUE = 20  # 升王棋子的价值
