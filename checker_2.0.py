@@ -148,10 +148,16 @@ def get_valid_moves(board, row, col):
     # Regular AI pieces can only move or jump downwards
     elif piece == "black":
         check_and_add_moves([(1, -1), (1, 1)])
+        
+    # Check if any of the moves is a jump
+    jump_moves = [move for move in moves if abs(move[0] - row) == 2]
 
-    # Return the list of possible moves
+    # If there are any jump moves, return only those
+    if jump_moves:
+        return jump_moves
+
+    # Otherwise, return all moves
     return moves
-
 
 def can_jump(row, col):
     # Check if a piece has a chance to jump
