@@ -319,98 +319,39 @@ def set_difficulty(difficulty):
 # 定义一个变量，用来存储当前选中的棋子的有效移动
 valid_moves = []
 
-
-# 处理鼠标点击事件
 def handle_click(event):
-    # 获取鼠标点击的位置
-    x = event.x
-    y = event.y
+    global selected_piece, valid_moves, game_over
+    x, y = event.x, event.y
+    row, col = y // 60, x // 60
 
-    row = y // 60
-    col = x // 60
-
-    # 使用global关键字，声明要使用全局变量
-    global selected_piece
-    global valid_moves
-
-    # 检查game_over是否为True，如果是，就直接返回
-    if game_over:
-        return
-    # 如果鼠标点击的位置不在棋盘上，就直接返回
-    if not is_on_board(row, col):
+    if game_over or not is_on_board(row, col):
         return
 
-    # 如果没有选中棋子，就尝试选中一个玩家的棋子
     if selected_piece is None:
-        # 如果方格有玩家的棋子，就选中它，并获取它的有效移动
         if board[row][col] in (PLAYER_COLOR, PLAYER_KING_COLOR):
             selected_piece = (row, col)
-            valid_moves = get_valid_moves(board, row, col)  # 获取有效移动
-
-            # 检查玩家是否有必须跳过对方棋子的情况
-            must_jump = False
-            for r in range(8):
-                for c in range(8):
-                    if board[r][c] in (PLAYER_COLOR, PLAYER_KING_COLOR):
-                        moves = get_valid_moves(board, r, c)
-                        for move in moves:
-                            if abs(move[0] - r) > 1:
-                                must_jump = True
-                                break
-
-            # 如果有，就只允许玩家选择可以跳过对方棋子的走法，并弹出提示信息
-            if must_jump:
+            valid_moves = get_valid_moves(board, row, col)
+            if any(abs(move[0] - row) > 1 for move in valid_moves):
                 valid_moves = [move for move in valid_moves if abs(move[0] - row) > 1]
-
-
-    # 如果已经选中棋子，就尝试移动它
     else:
-        # 如果方格是有效的移动目标，就移动棋子，并取消选中
         if (row, col) in valid_moves:
             is_king = make_move(board, selected_piece[0], selected_piece[1], row, col)
             draw_board()
-
-            # 检查玩家是否可以继续跳跃，如果可以，就不要让AI移动，而是让玩家继续选择目标位置
-            # 只有当移动的距离大于1时，才表示吃掉了对方的棋子，才需要判断是否能继续跳跃
             if not is_king and abs(row - selected_piece[0]) > 1 and can_jump(row, col):
                 selected_piece = (row, col)
-                valid_moves = get_valid_moves(board, row, col)
                 valid_moves = [move for move in valid_moves if abs(move[0] - row) > 1]
-                tk.messagebox.showinfo("提示", "你可以继续跳跃。")
             else:
                 selected_piece = None
-                # 让AI移动
                 ai_move()
-
-
-        # 如果方格是另一个玩家的棋子，就取消之前的选中，并选中这个棋子
         elif board[row][col] in (PLAYER_COLOR, PLAYER_KING_COLOR):
             selected_piece = (row, col)
-            valid_moves = get_valid_moves(board, row, col)  # 获取有效移动
-
-            # 检查玩家是否有必须跳过对方棋子的情况
-            must_jump = False
-            for r in range(8):
-                for c in range(8):
-                    if board[r][c] in (PLAYER_COLOR, PLAYER_KING_COLOR):
-                        moves = get_valid_moves(board, r, c)
-                        for move in moves:
-                            if abs(move[0] - r) > 1:
-                                must_jump = True
-                                break
-
-            # 如果有，就只允许玩家选择可以跳过对方棋子的走法，并弹出提示信息
-            if must_jump:
+            valid_moves = get_valid_moves(board, row, col)
+            if any(abs(move[0] - row) > 1 for move in valid_moves):
                 valid_moves = [move for move in valid_moves if abs(move[0] - row) > 1]
-                tk.messagebox.showinfo("提示", "有必吃，请移动该棋子。")
-
-        # 如果方格是其他情况，就取消选中
         else:
             selected_piece = None
 
-    # 重新画出棋盘
     draw_board()
-
 
 # 判断游戏是否结束，返回True或False
 def is_game_over():
