@@ -4,6 +4,9 @@ import tkinter.messagebox as messagebox
 import time
 from typing import List, Tuple
 
+
+valid_moves = []
+
 BOARD_SIZE = 8
 SQUARE_SIZE = 60
 window = tk.Tk()
@@ -175,12 +178,12 @@ def make_king(x, y):
     if piece is None:
         return False
 
-    if piece == PLAYER_COLOR and row == 0:
-        board[row][col] = "white king"
+    if piece == PLAYER_COLOR and x == 0:
+        board[x][y] = "white king"
         return True
 
-    elif piece == AI_COLOR and row == 7:
-        board[row][col] = "black king"
+    elif piece == AI_COLOR and x == 7:
+        board[x][y] = "black king"
         return True
 
     return False
@@ -316,8 +319,7 @@ def set_difficulty(difficulty):
     global ai_difficulty
     ai_difficulty = difficulty
 
-# 定义一个变量，用来存储当前选中的棋子的有效移动
-valid_moves = []
+
 
 def handle_click(event):
     global selected_piece, valid_moves, game_over
@@ -398,48 +400,36 @@ def is_game_over():
     return False
 
 
-def show_rules():
-    # 显示规则说明
-    tk.messagebox.showinfo("规则说明", "这是一个国际64格跳棋游戏。\n"
-                                   "游戏规则如下：\n"
-                                   "1. 每人用一种颜色棋子占一个角。\n"
-                                   "2. 棋子可以在有直线连接的相邻六个方向移动或跳过其他棋子。\n"
-                                   "3. 谁先把正对面的阵地全部占领，谁就取得胜利。\n"
-                                   "4. 如果一方棋子设法抓住了对方的国王，它会立即加冕为国王，随后游戏结束。\n"
-                                   "5. 国王是在自己的棋子到达对面的最后一行时才产生的。\n"
-                                   "6. 国王可以在任意方向移动或跳过其他棋子。\n"
-                                   "祝你玩得开心！")
+import tkinter as tk
+from tkinter import messagebox
+
+
+def display_rules():
+    # Display rule descriptions
+    messagebox.showinfo("Game Rules",
+                        "This is a game of International 64-square Draughts.\n"
+                        "The game rules are as follows:\n"
+                        "1. Each player occupies one corner with a different color.\n"
+                        "2. Pieces can move or jump over other pieces in any of the six adjacent directions connected in a straight line.\n"
+                        "3. The first player to occupy all the positions directly opposite wins.\n"
+                        "4. If a player's piece captures the opponent's king, it will immediately be crowned king and the game ends.\n"
+                        "5. The king is produced when one's piece reaches the last line on the opposite side.\n"
+                        "6. The king can move or jump over other pieces in any direction.\n"
+                        "Enjoy your game!")
 
 
 def restart_game():
-    # 使用global关键字，声明要使用全局变量
-    global board
-    global game_over
-    # 重置棋盘状态
+    global board, game_over
     board = [[None] * 8 for _ in range(8)]
-    for row in range(3):
-        for col in range(8):
-            if (row + col) % 2 == 1:
-                board[row][col] = AI_COLOR
+    initialize_board()
 
-    for row in range(5, 8):
-        for col in range(8):
-            if (row + col) % 2 == 1:
-                board[row][col] = PLAYER_COLOR
-
-    # 设置game_over为False
     game_over = False
 
-    # 重新绘制棋盘
     draw_board()
 
-    # 清除游戏结束信息
-    canvas.delete("all")
-    # 重新绘制棋盘
-    draw_board()
 
 def show_game_over_message():
-    # 显示游戏结束信息
+    # Display game over message
     player_pieces = 0
     ai_pieces = 0
     for row in range(8):
@@ -450,90 +440,77 @@ def show_game_over_message():
                 ai_pieces += 1
 
     if player_pieces == 0:
-        message = 'AI赢了!'
+        message = 'AI won!'
     else:
-        message = '你赢了!'
-    # 创建一个新的顶级窗口
-    top = tk.Toplevel()
-    top.title('游戏结束')
+        message = 'You won!'
 
-    # 在顶级窗口中添加标签显示游戏结束的消息
+    show_message_in_new_window(message)
+
+    game_over = True
+
+
+def show_message_in_new_window(message):
+    top = tk.Toplevel()
+    top.title('Game Over')
+
     label = tk.Label(top, text=message, font=('Arial', 24))
     label.pack(padx=20, pady=20)
 
-    # 定义关闭窗口的函数
-    def close_window():
-        top.destroy()
-        window.destroy()
+    close_button = tk.Button(top, text='Close Window', command=top.destroy)
+    close_button.pack(pady=10)
 
-    # 在顶级窗口中添加一个按钮用于关闭窗口
-    button = tk.Button(top, text='关闭窗口', command=close_window)
-    button.pack(pady=10)
-    # 在顶级窗口中添加一个按钮用于重新开始游戏
-
-    def game_close_restart():
-        top.destroy()
-        restart_game()
-    restart_button = tk.Button(top, text='重新开始游戏', command=game_close_restart)
+    restart_button = tk.Button(top, text='Restart Game', command=lambda: restart_game_and_destroy(top))
     restart_button.pack(pady=10)
-    # # 使用messagebox显示游戏结束信息
-    # messagebox.showinfo('游戏结束', message)
 
-    # canvas.create_text(8 * 60 / 2, 8 * 60 / 2, text=message, fill='yellow',
-    #                    font=('Arial', 24))
-    window.quit()  # 终止主循环
-    window.deiconify()
-    window.mainloop()
 
-    # 设置game_over为True
-    global game_over
-    game_over = True
+def restart_game_and_destroy(top):
+    top.destroy()
+    restart_game()
 
-    canvas.create_text(8 * 60 / 2, 8 * 60 / 2, text=message, fill='yellow',
-                       font=('Arial', 24))
-    window.quit()  # 终止主循环
-    window.deiconify()
-    window.mainloop()
 
-if __name__ == "__main__":
-    window = tk.Tk()
-    window.title("Checkers")
-
-    canvas = tk.Canvas(window, width=8 * 60, height=8 * 60)
-    canvas.pack()
-
-    # 初始化棋盘状态
+def initialize_board():
+    # Initialize the board state
     for row in range(3):
         for col in range(8):
             if (row + col) % 2 == 1:
                 board[row][col] = AI_COLOR
-
     for row in range(5, 8):
         for col in range(8):
             if (row + col) % 2 == 1:
                 board[row][col] = PLAYER_COLOR
 
-    # 绑定事件
-    canvas.bind("<Button-1>", handle_click)
 
-    # 显示菜单
+def create_menu(window):
+    # Create menu
     menu = tk.Menu(window)
     window.config(menu=menu)
 
-    difficulty_menu = tk.Menu(menu)
-    # 添加菜单项
+    # Add menu items
     rules_menu = tk.Menu(menu)
+    menu.add_cascade(label="Game Rules", menu=rules_menu)
+    rules_menu.add_command(label="View Rules", command=display_rules)
 
-    menu.add_cascade(label="规则说明", menu=rules_menu)
-    rules_menu.add_command(label="查看规则", command=show_rules)
+    difficulty_menu = tk.Menu(menu)
+    menu.add_cascade(label="Difficulty Level", menu=difficulty_menu)
+    difficulty_menu.add_command(label="Easy", command=lambda: set_difficulty("Easy"))
+    difficulty_menu.add_command(label="Medium", command=lambda: set_difficulty("Medium"))
+    difficulty_menu.add_command(label="Hard", command=lambda: set_difficulty("Hard"))
+    menu.add_command(label="Restart Game", command=restart_game)
 
-    menu.add_cascade(label="难度选择", menu=difficulty_menu)
-    difficulty_menu.add_command(label="简单", command=lambda: set_difficulty("Easy"))
-    difficulty_menu.add_command(label="中等", command=lambda: set_difficulty("Medium"))
-    difficulty_menu.add_command(label="困难", command=lambda: set_difficulty("Hard"))
-    menu.add_command(label="重开游戏", command=restart_game)
 
-    # 绘制棋盘
+if __name__ == "__main__":
+    # Create window and canvas
+    window = tk.Tk()
+    window.title("Checkers")
+    canvas = tk.Canvas(window, width=8 * 60, height=8 * 60)
+    canvas.pack()
+
+    # Initialize board and bind event
+    initialize_board()
+    canvas.bind("<Button-1>", handle_click)
+
+    # Create menu and draw board
+    create_menu(window)
     draw_board()
 
     window.mainloop()
