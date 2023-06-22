@@ -1,50 +1,61 @@
-import tkinter as tk
-import random
-import tkinter.messagebox as messagebox
-import time
+def is_valid_move(game_board, start_row, start_col, end_row, end_col):
+    piece_color = game_board[start_row][start_col]
 
-# Draw the checkerboard
-def draw_board():
-    # Clear the canvas
-    canvas.delete("all")
+    # Define a list to store all possible colors of the opponent's pieces
+    enemy_piece_colors = []
+    if piece_color in ["white", "green"]:
+        enemy_piece_colors = ["black", "yellow"]
+    elif piece_color in ["black", "yellow"]:
+        enemy_piece_colors = ["white", "green"]
 
-    # Draw the squares of the checkerboard
-    for row in range(8):
-        for col in range(8):
-            # Calculate the coordinates of the square based on the row and column numbers
-            x1, y1 = col * 60, row * 60
-            x2, y2 = x1 + 60, y1 + 60
+    # If the target position is not within the range of the board, or is not empty, return False
+    if not (0 <= end_row < 8 and 0 <= end_col < 8) or game_board[end_row][end_col] is not None:
+        return False
 
-            # Fill the square with gray if it's a black square
-            if (row + col) % 2 == 0:
-                canvas.create_rectangle(x1, y1, x2, y2, fill="#8B4513")
+    # If the absolute difference between the target position and the starting position is 1, it means it is a normal move
+    if abs(end_row - start_row) == 1:
+        # If the piece is a king, it can move one square in any direction
+        if piece_color in ["green", "yellow"]:
+            # If the target position is the opponent's piece, return False
+            if game_board[end_row][end_col] in enemy_piece_colors:
+                return False
+            else:
+                return True
+        # If the piece is a normal player piece, it can only move one square up
+        elif piece_color == "white" and end_row < start_row:
+            # If the target position is the opponent's piece, return False
+            if game_board[end_row][end_col] in enemy_piece_colors:
+                return False
+            else:
+                return True
+        # If the piece is a normal AI piece, it can only move one square down
+        elif piece_color == "black" and end_row > start_row:
+            # If the target position is the opponent's piece, return False
+            if game_board[end_row][end_col] in enemy_piece_colors:
+                return False
+            else:
+                return True
 
-            # If there's a piece on the square, draw the piece with its color and shape
-            piece = board[row][col]
-            if piece is not None:
-                # Draw a circle with the color of the piece
-                color = "white" if piece == "white" else "black" if piece == "black" else "green" if piece == "green" else "yellow"
-                canvas.create_oval(x1 + 5, y1 + 5, x2 - 5, y2 - 5, fill=color)
+    # If the absolute difference between the target position and the starting position is 2, it means it is a jump move
+    elif abs(end_row - start_row) == 2:
+        # Calculate the row and column numbers of the middle position of the jump
+        mid_row = (start_row + end_row) // 2
+        mid_col = (start_col + end_col) // 2
 
-                # If the piece is a king, draw a star on the circle
-                if piece in ("green", "yellow"):
-                    canvas.create_polygon(
-                        x1 + 25, y1 + 10,   # Top point
-                        x1 + 30, y1 + 30,   # Right bottom point
-                        x1 + 40, y1 + 30,   # Right top point
-                        x1 + 32, y1 + 40,   # Bottom right point
-                        x1 + 35, y1 + 55,   # Bottom middle point
-                        x1 + 25, y1 + 45,   # Bottom left point
-                        x1 + 15, y1 + 55,   # Bottom middle point
-                        x1 + 18, y1 + 40,   # Bottom left point
-                        x1 + 10, y1 + 30,   # Left top point
-                        x1 + 20, y1 + 30,   # Left bottom point
-                        fill="blue"
-                    )
+        # If there is an opponent's piece in the middle position, it can jump over it
+        if game_board[mid_row][mid_col] is not None and game_board[mid_row][mid_col] in enemy_piece_colors:
+            return True
 
-            # If the square is a selected piece or a valid move, mark it with a yellow border
-            if selected_piece is not None and (row, col) in get_valid_moves(board, selected_piece[0], selected_piece[1]):
-                canvas.create_rectangle(x1 + 2, y1 + 2, x2 - 2, y2 - 2, outline="yellow", width=4)
+        # If there is own piece in the middle position, it cannot jump over it
+        # Define a list to store all possible colors of own pieces
+        own_piece_colors = [piece_color, piece_color.upper()]
+        if piece_color in ["white", "green"]:
+            own_piece_colors.append("green")
+        elif piece_color in ["black", "yellow"]:
+            own_piece_colors.append("yellow")
 
-    # Update the canvas
-    canvas.update()
+        if game_board[mid_row][mid_col] is not None and game_board[mid_row][mid_col] in own_piece_colors:
+            return False
+
+    # In all other cases, return False
+    return False

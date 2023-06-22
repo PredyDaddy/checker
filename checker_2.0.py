@@ -16,7 +16,7 @@ game_over = False
 PLAYER_COLOR = "white"
 AI_COLOR = "black"
 PLAYER_KING_COLOR = "green"
-AI_KING_COLOR = "yellow"
+AI_KING_COLOR = "blue"
 
 NORMAL_VALUE = 10  # 普通棋子的价值
 KING_VALUE = 20  # 升王棋子的价值
@@ -83,66 +83,67 @@ def draw_board():
     # Update the canvas
     canvas.update()
 
-def is_valid_move(board, row1, col1, row2, col2):
-    color = board[row1][col1]
+def is_valid_move(game_board, start_row, start_col, end_row, end_col):
+    piece_color = game_board[start_row][start_col]
 
-    # 定义一个列表，用来存储对方的所有可能的棋子颜色
-    opponent_colors = []
-    if color == PLAYER_COLOR or color == PLAYER_KING_COLOR:
-        opponent_colors = [AI_COLOR, AI_KING_COLOR]
-    elif color == AI_COLOR or color == AI_KING_COLOR:
-        opponent_colors = [PLAYER_COLOR, PLAYER_KING_COLOR]
-    # 如果目标位置不在棋盘范围内，或者不为空，就返回False
-    if not (0 <= row2 < 8 and 0 <= col2 < 8) or board[row2][col2] != None:
+    # Define a list to store all possible colors of the opponent's pieces
+    enemy_piece_colors = []
+    if piece_color in ["white", "green"]:
+        enemy_piece_colors = ["black", "yellow"]
+    elif piece_color in ["black", "yellow"]:
+        enemy_piece_colors = ["white", "green"]
+
+    # If the target position is not within the range of the board, or is not empty, return False
+    if not (0 <= end_row < 8 and 0 <= end_col < 8) or game_board[end_row][end_col] is not None:
         return False
-    # 如果目标位置和起始位置的行差的绝对值为1，表示是普通移动
-    if abs(row2 - row1) == 1:
-        # 如果棋子是国王，就可以在任意方向移动一格
-        if color == PLAYER_KING_COLOR or color == AI_KING_COLOR:
-            # 如果目标位置是对方的棋子，就返回False
-            if board[row2][col2] in opponent_colors:
+
+    # If the absolute difference between the target position and the starting position is 1, it means it is a normal move
+    if abs(end_row - start_row) == 1:
+        # If the piece is a king, it can move one square in any direction
+        if piece_color in ["green", "yellow"]:
+            # If the target position is the opponent's piece, return False
+            if game_board[end_row][end_col] in enemy_piece_colors:
                 return False
             else:
                 return True
-        # 如果棋子是玩家的普通棋子，就只能向上移动一格
-        elif color == PLAYER_COLOR and row2 < row1:
-            # 如果目标位置是对方的棋子，就返回False
-            if board[row2][col2] in opponent_colors:
+        # If the piece is a normal player piece, it can only move one square up
+        elif piece_color == "white" and end_row < start_row:
+            # If the target position is the opponent's piece, return False
+            if game_board[end_row][end_col] in enemy_piece_colors:
                 return False
             else:
                 return True
-        # 如果棋子是AI的普通棋子，就只能向下移动一格
-        elif color == AI_COLOR and row2 > row1:
-            # 如果目标位置是对方的棋子，就返回False
-            if board[row2][col2] in opponent_colors:
+        # If the piece is a normal AI piece, it can only move one square down
+        elif piece_color == "black" and end_row > start_row:
+            # If the target position is the opponent's piece, return False
+            if game_board[end_row][end_col] in enemy_piece_colors:
                 return False
             else:
                 return True
 
-    # 如果目标位置和起始位置的行差的绝对值为2，表示是跳跃移动
-    elif abs(row2 - row1) == 2:
-        # 计算跳跃的中间位置的行列号
-        row3 = (row1 + row2) // 2
-        col3 = (col1 + col2) // 2
+    # If the absolute difference between the target position and the starting position is 2, it means it is a jump move
+    elif abs(end_row - start_row) == 2:
+        # Calculate the row and column numbers of the middle position of the jump
+        mid_row = (start_row + end_row) // 2
+        mid_col = (start_col + end_col) // 2
 
-        # 如果中间位置有对方的棋子，就可以跳过它
-        if board[row3][col3] != None and board[row3][col3] in opponent_colors:
+        # If there is an opponent's piece in the middle position, it can jump over it
+        if game_board[mid_row][mid_col] is not None and game_board[mid_row][mid_col] in enemy_piece_colors:
             return True
 
-        # 如果中间位置有自己的棋子，就不能跳过它
-        # 定义一个列表，用来存储自己的所有可能的棋子颜色
-        own_colors = [color, color.upper()]
-        if color == PLAYER_COLOR or color == PLAYER_KING_COLOR:
-            own_colors.append(PLAYER_KING_COLOR)
-        elif color == AI_COLOR or color == AI_KING_COLOR:
-            own_colors.append(AI_KING_COLOR)
+        # If there is own piece in the middle position, it cannot jump over it
+        # Define a list to store all possible colors of own pieces
+        own_piece_colors = [piece_color, piece_color.upper()]
+        if piece_color in ["white", "green"]:
+            own_piece_colors.append("green")
+        elif piece_color in ["black", "yellow"]:
+            own_piece_colors.append("yellow")
 
-        if board[row3][col3] != None and board[row3][col3] in own_colors:
+        if game_board[mid_row][mid_col] is not None and game_board[mid_row][mid_col] in own_piece_colors:
             return False
 
-    # 其他情况都返回False
+    # In all other cases, return False
     return False
-
 
 # 返回一个棋子的所有合法走法，参数是棋盘，行号和列号
 def get_valid_moves(board, row, col):
