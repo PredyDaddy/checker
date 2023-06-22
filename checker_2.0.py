@@ -353,59 +353,49 @@ def handle_click(event):
 
     draw_board()
 
-# 判断游戏是否结束，返回True或False
 def is_game_over():
-    # 初始化两个变量，用来存储玩家和AI的棋子数量
-    player_pieces = 0
-    ai_pieces = 0
+    # Initialize two variables to store the number of pieces for the player and the AI
+    player_pieces, ai_pieces = 0, 0
+    player_has_valid_moves, ai_has_valid_moves = False, False
+    player_can_capture_king, ai_can_capture_king = False, False
 
-    # 遍历棋盘，统计棋子数量
+    # Traverse the board to count the number of pieces and check for valid moves
     for row in range(8):
         for col in range(8):
-            # 如果是玩家的棋子，就增加玩家的棋子数量
-            if board[row][col] in (PLAYER_COLOR, PLAYER_KING_COLOR):
+            piece = board[row][col]
+            if piece in (PLAYER_COLOR, PLAYER_KING_COLOR):
                 player_pieces += 1
-
-            # 如果是AI的棋子，就增加AI的棋子数量
-            elif board[row][col] in (AI_COLOR, AI_KING_COLOR):
+                if not player_has_valid_moves and get_valid_moves(board, row, col):
+                    player_has_valid_moves = True
+                if piece == PLAYER_COLOR and not player_can_capture_king:
+                    if is_valid_move(board, row, col, row - 2, col - 2) and board[row - 1][col - 1] == AI_KING_COLOR:
+                        player_can_capture_king = True
+                    elif is_valid_move(board, row, col, row - 2, col + 2) and board[row - 1][col + 1] == AI_KING_COLOR:
+                        player_can_capture_king = True
+            elif piece in (AI_COLOR, AI_KING_COLOR):
                 ai_pieces += 1
+                if not ai_has_valid_moves and get_valid_moves(board, row, col):
+                    ai_has_valid_moves = True
+                if piece == AI_COLOR and not ai_can_capture_king:
+                    if is_valid_move(board, row, col, row + 2, col - 2) and board[row + 1][col - 1] == PLAYER_KING_COLOR:
+                        ai_can_capture_king = True
+                    elif is_valid_move(board, row, col, row + 2, col + 2) and board[row + 1][col + 1] == PLAYER_KING_COLOR:
+                        ai_can_capture_king = True
 
-    # 如果玩家或者AI的棋子数量为0，就返回True，表示游戏结束
+    # If the number of pieces for the player or the AI is 0, return True, indicating the game is over
     if player_pieces == 0 or ai_pieces == 0:
         return True
 
-    # 如果玩家或者AI没有有效的走法，就返回True，表示游戏结束
-    for row in range(8):
-        for col in range(8):
-            # 如果是玩家的棋子，并且有有效的走法，就返回False，表示游戏未结束
-            if board[row][col] in (PLAYER_COLOR, PLAYER_KING_COLOR) and get_valid_moves(board, row, col):
-                return False
+    # If neither the player nor the AI has valid moves, return True, indicating the game is over
+    if not player_has_valid_moves and not ai_has_valid_moves:
+        return True
 
-            # 如果是AI的棋子，并且有有效的走法，就返回False，表示游戏未结束
-            elif board[row][col] in (AI_COLOR, AI_KING_COLOR) and get_valid_moves(board, row, col):
-                return False
+    # If either the player or the AI can capture the opponent's king, return True, indicating the game is over
+    if player_can_capture_king or ai_can_capture_king:
+        return True
 
-    # 如果一方棋子设法抓住了对方的国王，它会立即加冕为国王，随后游戏结束
-    for row in range(8):
-        for col in range(8):
-            # 如果是玩家的普通棋子，并且可以跳过对方的国王，就返回True，表示游戏结束
-            if board[row][col] == PLAYER_COLOR and is_valid_move(board, row, col, row - 2, col - 2) and board[row - 1][
-                col - 1] == AI_KING_COLOR:
-                return True
-            if board[row][col] == PLAYER_COLOR and is_valid_move(board, row, col, row - 2, col + 2) and board[row - 1][
-                col + 1] == AI_KING_COLOR:
-                return True
-
-            # 如果是AI的普通棋子，并且可以跳过对方的国王，就返回True，表示游戏结束
-            if board[row][col] == AI_COLOR and is_valid_move(board, row, col, row + 2, col - 2) and board[row + 1][
-                col - 1] == PLAYER_KING_COLOR:
-                return True
-            if board[row][col] == AI_COLOR and is_valid_move(board, row, col, row + 2, col + 2) and board[row + 1][
-                col + 1] == PLAYER_KING_COLOR:
-                return True
-
-    # 如果以上都不满足，就返回True，表示游戏结束
-    return True
+    # If none of the above conditions are met, return False, indicating the game is not over
+    return False
 
 
 def show_rules():
@@ -505,45 +495,45 @@ def show_game_over_message():
     window.deiconify()
     window.mainloop()
 
+if __name__ == "__main__":
+    window = tk.Tk()
+    window.title("Checkers")
 
-window = tk.Tk()
-window.title("Checkers")
+    canvas = tk.Canvas(window, width=8 * 60, height=8 * 60)
+    canvas.pack()
 
-canvas = tk.Canvas(window, width=8 * 60, height=8 * 60)
-canvas.pack()
+    # 初始化棋盘状态
+    for row in range(3):
+        for col in range(8):
+            if (row + col) % 2 == 1:
+                board[row][col] = AI_COLOR
 
-# 初始化棋盘状态
-for row in range(3):
-    for col in range(8):
-        if (row + col) % 2 == 1:
-            board[row][col] = AI_COLOR
+    for row in range(5, 8):
+        for col in range(8):
+            if (row + col) % 2 == 1:
+                board[row][col] = PLAYER_COLOR
 
-for row in range(5, 8):
-    for col in range(8):
-        if (row + col) % 2 == 1:
-            board[row][col] = PLAYER_COLOR
+    # 绑定事件
+    canvas.bind("<Button-1>", handle_click)
 
-# 绑定事件
-canvas.bind("<Button-1>", handle_click)
+    # 显示菜单
+    menu = tk.Menu(window)
+    window.config(menu=menu)
 
-# 显示菜单
-menu = tk.Menu(window)
-window.config(menu=menu)
+    difficulty_menu = tk.Menu(menu)
+    # 添加菜单项
+    rules_menu = tk.Menu(menu)
 
-difficulty_menu = tk.Menu(menu)
-# 添加菜单项
-rules_menu = tk.Menu(menu)
+    menu.add_cascade(label="规则说明", menu=rules_menu)
+    rules_menu.add_command(label="查看规则", command=show_rules)
 
-menu.add_cascade(label="规则说明", menu=rules_menu)
-rules_menu.add_command(label="查看规则", command=show_rules)
+    menu.add_cascade(label="难度选择", menu=difficulty_menu)
+    difficulty_menu.add_command(label="简单", command=lambda: set_difficulty("Easy"))
+    difficulty_menu.add_command(label="中等", command=lambda: set_difficulty("Medium"))
+    difficulty_menu.add_command(label="困难", command=lambda: set_difficulty("Hard"))
+    menu.add_command(label="重开游戏", command=restart_game)
 
-menu.add_cascade(label="难度选择", menu=difficulty_menu)
-difficulty_menu.add_command(label="简单", command=lambda: set_difficulty("Easy"))
-difficulty_menu.add_command(label="中等", command=lambda: set_difficulty("Medium"))
-difficulty_menu.add_command(label="困难", command=lambda: set_difficulty("Hard"))
-menu.add_command(label="重开游戏", command=restart_game)
+    # 绘制棋盘
+    draw_board()
 
-# 绘制棋盘
-draw_board()
-
-window.mainloop()
+    window.mainloop()
