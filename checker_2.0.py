@@ -16,7 +16,7 @@ game_over = False
 PLAYER_COLOR = "white"
 AI_COLOR = "black"
 PLAYER_KING_COLOR = "green"
-AI_KING_COLOR = "blue"
+AI_KING_COLOR = "yellow"
 
 NORMAL_VALUE = 10  # 普通棋子的价值
 KING_VALUE = 20  # 升王棋子的价值
@@ -145,44 +145,45 @@ def is_valid_move(game_board, start_row, start_col, end_row, end_col):
     # In all other cases, return False
     return False
 
-# 返回一个棋子的所有合法走法，参数是棋盘，行号和列号
-def get_valid_moves(board, row, col):
-    color = board[row][col]
-    # 初始化一个空列表，用来存储有效移动
-    moves = []
+# Returns all legal moves for a piece, parameters are the board, row number, and column number
+def get_valid_moves(game_board, piece_row, piece_col):
+    piece_color = game_board[piece_row][piece_col]
+    # Initialize an empty list to store valid moves
+    valid_moves = []
 
-    # 如果棋子是国王，就可以在任意方向移动或跳跃
-    if color == PLAYER_KING_COLOR or color == AI_KING_COLOR:
-        for direction in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
-            # 普通移动
-            if is_valid_move(board, row, col, row + direction[0], col + direction[1]):
-                moves.append((row + direction[0], col + direction[1]))
-            # 跳跃移动
-            if is_valid_move(board, row, col, row + 2 * direction[0], col + 2 * direction[1]):
-                moves.append((row + 2 * direction[0], col + 2 * direction[1]))
+    # If the piece is a king, it can move or jump in any direction
+    if piece_color == "green" or piece_color == "yellow":
+        for move_direction in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            # Normal move
+            if is_valid_move(game_board, piece_row, piece_col, piece_row + move_direction[0], piece_col + move_direction[1]):
+                valid_moves.append((piece_row + move_direction[0], piece_col + move_direction[1]))
+            # Jump move
+            if is_valid_move(game_board, piece_row, piece_col, piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]):
+                valid_moves.append((piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]))
 
-    # 如果棋子是玩家的普通棋子，就只能向上移动或跳跃
-    elif color == PLAYER_COLOR:
-        for direction in [(-1, -1), (-1, 1)]:
-            # 普通移动
-            if is_valid_move(board, row, col, row + direction[0], col + direction[1]):
-                moves.append((row + direction[0], col + direction[1]))
-            # 跳跃移动
-            if is_valid_move(board, row, col, row + 2 * direction[0], col + 2 * direction[1]):
-                moves.append((row + 2 * direction[0], col + 2 * direction[1]))
+    # If the piece is a player's regular piece, it can only move or jump upwards
+    elif piece_color == "white":
+        for move_direction in [(-1, -1), (-1, 1)]:
+            # Normal move
+            if is_valid_move(game_board, piece_row, piece_col, piece_row + move_direction[0], piece_col + move_direction[1]):
+                valid_moves.append((piece_row + move_direction[0], piece_col + move_direction[1]))
+            # Jump move
+            if is_valid_move(game_board, piece_row, piece_col, piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]):
+                valid_moves.append((piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]))
 
-    # 如果棋子是AI的普通棋子，就只能向下移动或跳跃
-    elif color == AI_COLOR:
-        for direction in [(1, -1), (1, 1)]:
-            # 普通移动
-            if is_valid_move(board, row, col, row + direction[0], col + direction[1]):
-                moves.append((row + direction[0], col + direction[1]))
-            # 跳跃移动
-            if is_valid_move(board, row, col, row + 2 * direction[0], col + 2 * direction[1]):
-                moves.append((row + 2 * direction[0], col + 2 * direction[1]))
+    # If the piece is an AI's regular piece, it can only move or jump downwards
+    elif piece_color == "black":
+        for move_direction in [(1, -1), (1, 1)]:
+            # Normal move
+            if is_valid_move(game_board, piece_row, piece_col, piece_row + move_direction[0], piece_col + move_direction[1]):
+                valid_moves.append((piece_row + move_direction[0], piece_col + move_direction[1]))
+            # Jump move
+            if is_valid_move(game_board, piece_row, piece_col, piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]):
+                valid_moves.append((piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]))
 
-    # 返回有效移动的列表
-    return moves
+    # Return the list of valid moves
+    return valid_moves
+
 
 def can_jump(row, col):
     # 判断一个棋子是否有跳过的机会
@@ -210,7 +211,6 @@ def can_jump(row, col):
                     return True
 
     return False
-
 
 def is_on_board(row, col):
     # 判断一个坐标是否在棋盘上
