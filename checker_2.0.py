@@ -198,13 +198,13 @@ def can_jump(row, col):
 
     return False
 
-def is_on_board(row, col):
+def is_on_board(x, y):
     # Check if a coordinate is on the board
-    return 0 <= row < 8 and 0 <= col < 8
+    return 0 <= x < 8 and 0 <= y < 8
 
-def make_king(row, col):
+def make_king(x, y):
     # Check if a piece can be promoted to king, and update its status
-    piece = board[row][col]
+    piece = board[x][y]
 
     if piece is None:
         return False
@@ -219,45 +219,38 @@ def make_king(row, col):
 
     return False
 
-# 移动棋子，参数是起始位置和目标位置
-def make_move(board, row1, col1, row2, col2, is_crowning=False):
-    # 获取棋子的颜色
-    color = board[row1][col1] # 这里用row1和col1作为索引
-    # 如果目标位置和起始位置的行差的绝对值大于1，表示是跳跃移动，就要吃掉对方的棋子
-    if abs(row2 - row1) > 1:
-        # 计算被吃掉的棋子的位置
-        row3 = (row1 + row2) // 2
-        col3 = (col1 + col2) // 2
+# Move a piece, with parameters for the starting position and the target position
+def make_move(board, start_row, start_col, end_row, end_col, is_crowning=False):
+    # Get the color of the piece
+    piece_color = board[start_row][start_col]
 
-        # 如果被吃棋子是否为王时，将当前棋子变为王
-        # if board[row3][col3] == PLAYER_KING_COLOR or board[row3][col3] == AI_KING_COLOR:
-        #     # 如果被吃棋子是王，则将当前棋子也变为王
-        #     board[row2][col2] = PLAYER_KING_COLOR if color == PLAYER_COLOR else AI_KING_COLOR
-        # else:
-        #     # 如果被吃棋子不是王，则按照原来的逻辑判断是否升为国王
-        #     # 把起始位置的棋子移动到目标位置
-        board[row2][col2] = board[row1][col1]
+    # Check if it's a jump move
+    is_jump_move = abs(end_row - start_row) > 1
 
-        # 把被吃掉的棋子从棋盘上移除
-        board[row3][col3] = None
+    if is_jump_move:
+        # Calculate the position of the captured piece
+        middle_row = (start_row + end_row) // 2
+        middle_col = (start_col + end_col) // 2
 
-    else:
-        # 如果不是跳跃移动，就直接把起始位置的棋子移动到目标位置
-        board[row2][col2] = board[row1][col1]
+        # Remove the captured piece
+        board[middle_row][middle_col] = None
 
-    # 如果棋子移动到了对方的底线，就升为国王
-    if color == PLAYER_COLOR and row2 == 0:
-        board[row2][col2] = PLAYER_KING_COLOR
-    elif color == AI_COLOR and row2 == 8 - 1:
-        board[row2][col2] = AI_KING_COLOR
+    # Move the piece to the target position
+    board[end_row][end_col] = piece_color
 
-    # 把起始位置置为空
-    board[row1][col1] = None
+    # Check if it needs to be crowned
+    is_player_piece = piece_color == PLAYER_COLOR
+    is_ai_piece = piece_color == AI_COLOR
+    reached_opponent_end = (is_player_piece and end_row == 0) or (is_ai_piece and end_row == 8 - 1)
 
-    if is_crowning:
-        return board
+    if reached_opponent_end:
+        board[end_row][end_col] = PLAYER_KING_COLOR if is_player_piece else AI_KING_COLOR
+
+    # Clear the starting position
+    board[start_row][start_col] = None
 
     return board
+
 
 # 返回所有可能的走法，参数是棋盘和颜色
 def get_all_moves(board, color):
