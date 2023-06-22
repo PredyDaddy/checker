@@ -146,43 +146,36 @@ def is_valid_move(game_board, start_row, start_col, end_row, end_col):
     return False
 
 # Returns all legal moves for a piece, parameters are the board, row number, and column number
-def get_valid_moves(game_board, piece_row, piece_col):
-    piece_color = game_board[piece_row][piece_col]
-    # Initialize an empty list to store valid moves
-    valid_moves = []
+# Function to get all possible legal moves for a given piece
+def get_valid_moves(board, row, col):
+    piece = board[row][col]
+    moves = []
 
-    # If the piece is a king, it can move or jump in any direction
-    if piece_color == "green" or piece_color == "yellow":
-        for move_direction in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
-            # Normal move
-            if is_valid_move(game_board, piece_row, piece_col, piece_row + move_direction[0], piece_col + move_direction[1]):
-                valid_moves.append((piece_row + move_direction[0], piece_col + move_direction[1]))
-            # Jump move
-            if is_valid_move(game_board, piece_row, piece_col, piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]):
-                valid_moves.append((piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]))
+    # Function to check and add valid moves
+    def check_and_add_moves(directions):
+        for dx, dy in directions:
+            new_row, new_col = row + dx, col + dy
+            if is_valid_move(board, row, col, new_row, new_col):
+                moves.append((new_row, new_col))
+            new_row, new_col = row + 2 * dx, col + 2 * dy
+            if is_valid_move(board, row, col, new_row, new_col):
+                moves.append((new_row, new_col))
 
-    # If the piece is a player's regular piece, it can only move or jump upwards
-    elif piece_color == "white":
-        for move_direction in [(-1, -1), (-1, 1)]:
-            # Normal move
-            if is_valid_move(game_board, piece_row, piece_col, piece_row + move_direction[0], piece_col + move_direction[1]):
-                valid_moves.append((piece_row + move_direction[0], piece_col + move_direction[1]))
-            # Jump move
-            if is_valid_move(game_board, piece_row, piece_col, piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]):
-                valid_moves.append((piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]))
+    # King pieces can move or jump in any direction
+    if piece in ["green", "yellow"]:
+        check_and_add_moves([(-1, -1), (-1, 1), (1, -1), (1, 1)])
 
-    # If the piece is an AI's regular piece, it can only move or jump downwards
-    elif piece_color == "black":
-        for move_direction in [(1, -1), (1, 1)]:
-            # Normal move
-            if is_valid_move(game_board, piece_row, piece_col, piece_row + move_direction[0], piece_col + move_direction[1]):
-                valid_moves.append((piece_row + move_direction[0], piece_col + move_direction[1]))
-            # Jump move
-            if is_valid_move(game_board, piece_row, piece_col, piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]):
-                valid_moves.append((piece_row + 2 * move_direction[0], piece_col + 2 * move_direction[1]))
+    # Regular player pieces can only move or jump upwards
+    elif piece == "white":
+        check_and_add_moves([(-1, -1), (-1, 1)])
 
-    # Return the list of valid moves
-    return valid_moves
+    # Regular AI pieces can only move or jump downwards
+    elif piece == "black":
+        check_and_add_moves([(1, -1), (1, 1)])
+
+    # Return the list of possible moves
+    return moves
+
 
 
 def can_jump(row, col):
