@@ -270,60 +270,40 @@ def alpha_beta_search(board, depth, alpha, beta, is_ai_turn):
 
     return best_score, best_move
 
-# AI移动，根据ai_difficulty的值来调用不同的搜索算法
 def ai_move():
     time.sleep(0.2)
     best_move = None
+    row, col, is_king = None, None, None
 
-    # 获取AI移动后的行列号和是否升王
-    row = None
-    col = None 
-    is_king = None
-
-    # 如果ai_difficulty是简单，就随机选择一个走法
     if ai_difficulty == "Easy":
-        moves = []
-        for row in range(8):
-            for col in range(8):
-                if board[row][col] == AI_COLOR or board[row][col] == AI_KING_COLOR:
-                    valid_moves = get_valid_moves(board, row, col)
-                    moves.extend([(row, col, move[0], move[1]) for move in valid_moves])
+        moves = [(r, c, move[0], move[1]) for r in range(8) for c in range(8) 
+                 if board[r][c] in [AI_COLOR, AI_KING_COLOR] 
+                 for move in get_valid_moves(board, r, c)]
         if moves:
-            # 检查所有可能的移动，以确定是否有必吃的情况
             must_jump = any(abs(move[0] - move[2]) > 1 for move in moves)
-            if must_jump:
-                moves = [move for move in moves if abs(move[0] - move[2]) > 1]
+            moves = [move for move in moves if abs(move[0] - move[2]) > 1] if must_jump else moves
             random_move = random.choice(moves)
-            make_move(board, random_move[0], random_move[1], random_move[2], random_move[3])
+            make_move(board, *random_move)
             draw_board()
+            row, col = random_move[2], random_move[3]
+            is_king = make_king(row, col)
 
-    elif ai_difficulty == "Medium":
-        _, best_move = alpha_beta_search(board, 2, -float('inf'), float('inf'), True)
+    else:
+        depth = 2 if ai_difficulty == "Medium" else 4
+        _, best_move = alpha_beta_search(board, depth, -float('inf'), float('inf'), True)
         if best_move:
-            make_move(board, best_move[0], best_move[1], best_move[2], best_move[3])
+            make_move(board, *best_move)
             draw_board()
+            row, col = best_move[2], best_move[3]
+            is_king = make_king(row, col)
 
-    elif ai_difficulty == "Hard":
+    while best_move and not is_king and can_jump(row, col):
         _, best_move = alpha_beta_search(board, 4, -float('inf'), float('inf'), True)
         if best_move:
-            make_move(board, best_move[0], best_move[1], best_move[2], best_move[3])
+            make_move(board, *best_move)
             draw_board()
-
-    if best_move:
-        row = best_move[2]
-        col = best_move[3]
-        is_king = make_king(row, col)
-
-    # 这里检查AI是否可以继续跳  
-    # 检查是否可以继续跳  
-    while best_move and not is_king and can_jump(row, col):
-       best_move = alpha_beta_search(board, 4, -float('inf'), float('inf'), True)  
-       if best_move:
-           make_move(board, best_move[0], best_move[1], best_move[2], best_move[3])
-           draw_board()           
-           row = best_move[2]
-           col = best_move[3]  
-           is_king = make_king(row, col)    
+            row, col = best_move[2], best_move[3]
+            is_king = make_king(row, col)
 
     if is_game_over():
         show_game_over_message()
@@ -331,13 +311,10 @@ def ai_move():
 
     return False
 
-
-
 def set_difficulty(difficulty):
-    # 设置AI难度
+    # setting the difficulty
     global ai_difficulty
     ai_difficulty = difficulty
-
 
 # 定义一个变量，用来存储当前选中的棋子的有效移动
 valid_moves = []
