@@ -7,25 +7,32 @@ from typing import List, Tuple
 
 valid_moves = []
 
+# Board Constants
 BOARD_SIZE = 8
 SQUARE_SIZE = 60
+
+# GUI Constants
 window = tk.Tk()
 window.withdraw()
 menu = tk.Menu(window)
 
-board = [[None] * 8 for _ in range(8)]
+# Game State Variables
+board = [[None] * BOARD_SIZE for _ in range(BOARD_SIZE)]
 selected_piece = None
 ai_difficulty = "Easy"
 game_over = False
+
+# Player Colors
 PLAYER_COLOR = "white"
 AI_COLOR = "black"
 PLAYER_KING_COLOR = "green"
 AI_KING_COLOR = "yellow"
 
-NORMAL_VALUE = 10  # 普通棋子的价值
-KING_VALUE = 20  # 升王棋子的价值
-EDGE_VALUE = 5  # 边缘棋子的价值
-CENTER_VALUE = 3  # 中心棋子的价值
+# Piece Values
+NORMAL_VALUE = 10
+KING_VALUE = 20
+EDGE_VALUE = 5
+CENTER_VALUE = 3
 
 def draw_board():
     # Clear the canvas
