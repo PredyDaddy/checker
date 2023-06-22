@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 import random
 import tkinter.messagebox as messagebox
 import time
@@ -369,12 +370,9 @@ def handle_click(event):
     draw_board()
 
 def is_game_over():
-    # Initialize two variables to store the number of pieces for the player and the AI
     player_pieces, ai_pieces = 0, 0
     player_has_valid_moves, ai_has_valid_moves = False, False
-    player_can_capture_king, ai_can_capture_king = False, False
 
-    # Traverse the board to count the number of pieces and check for valid moves
     for row in range(8):
         for col in range(8):
             piece = board[row][col]
@@ -382,40 +380,18 @@ def is_game_over():
                 player_pieces += 1
                 if not player_has_valid_moves and get_valid_moves(board, row, col):
                     player_has_valid_moves = True
-                if piece == PLAYER_COLOR and not player_can_capture_king:
-                    if is_valid_move(board, row, col, row - 2, col - 2) and board[row - 1][col - 1] == AI_KING_COLOR:
-                        player_can_capture_king = True
-                    elif is_valid_move(board, row, col, row - 2, col + 2) and board[row - 1][col + 1] == AI_KING_COLOR:
-                        player_can_capture_king = True
             elif piece in (AI_COLOR, AI_KING_COLOR):
                 ai_pieces += 1
                 if not ai_has_valid_moves and get_valid_moves(board, row, col):
                     ai_has_valid_moves = True
-                if piece == AI_COLOR and not ai_can_capture_king:
-                    if is_valid_move(board, row, col, row + 2, col - 2) and board[row + 1][col - 1] == PLAYER_KING_COLOR:
-                        ai_can_capture_king = True
-                    elif is_valid_move(board, row, col, row + 2, col + 2) and board[row + 1][col + 1] == PLAYER_KING_COLOR:
-                        ai_can_capture_king = True
 
-    # If the number of pieces for the player or the AI is 0, return True, indicating the game is over
     if player_pieces == 0 or ai_pieces == 0:
         return True
 
-    # If neither the player nor the AI has valid moves, return True, indicating the game is over
     if not player_has_valid_moves and not ai_has_valid_moves:
         return True
 
-    # If either the player or the AI can capture the opponent's king, return True, indicating the game is over
-    if player_can_capture_king or ai_can_capture_king:
-        return True
-
-    # If none of the above conditions are met, return False, indicating the game is not over
     return False
-
-
-import tkinter as tk
-from tkinter import messagebox
-
 
 def display_rules():
     # Display rule descriptions
@@ -442,17 +418,24 @@ def restart_game():
 
 
 def show_game_over_message():
-    # Display game over message
     player_pieces = 0
     ai_pieces = 0
+    player_has_valid_moves = False
+    ai_has_valid_moves = False
+
     for row in range(8):
         for col in range(8):
-            if board[row][col] == PLAYER_COLOR or board[row][col] == 'white king':
+            piece = board[row][col]
+            if piece in (PLAYER_COLOR, PLAYER_KING_COLOR):
                 player_pieces += 1
-            elif board[row][col] == AI_COLOR or board[row][col] == 'black king':
+                if not player_has_valid_moves and get_valid_moves(board, row, col):
+                    player_has_valid_moves = True
+            elif piece in (AI_COLOR, AI_KING_COLOR):
                 ai_pieces += 1
+                if not ai_has_valid_moves and get_valid_moves(board, row, col):
+                    ai_has_valid_moves = True
 
-    if player_pieces == 0:
+    if player_pieces == 0 or not player_has_valid_moves:
         message = 'AI won!'
     else:
         message = 'You won!'
@@ -460,6 +443,7 @@ def show_game_over_message():
     show_message_in_new_window(message)
 
     game_over = True
+
 
 
 def show_message_in_new_window(message):
